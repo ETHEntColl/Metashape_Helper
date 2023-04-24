@@ -2,40 +2,41 @@
 # Metashape Helper
 
 ## Introduction
-We utilize a 3D scanner to scan insects from the entomological collection at ETH. Initially, we had to manually carry out each step in Metashape to create a 3D model, which was tedious and time-consuming.
+We are in the process of digitalizing our insect types in the [Entomological Collection](https://usys.ethz.ch/en/research/collections/entomological-collection.html) at ETH with a 3d-scanner from [Small World Vision](https://small-world-vision.de/en/). Our goal is to have a 3d-model (calculated with Metashape) of all our most valuable insects and later make them available for the public using a 3d-viewer.
 
-To overcome this challenge,  we developed some [scripts](https://github.com/kizvki/Insect-Scanner/tree/main/Metashape/Script/Version%201.8) that automate many of the repetitive tasks. These scripts were incredibly useful and expedited the entire process. However, they had to be executed manually within the Metashape software, and the settings had to be adjusted every time we recalibrated the scanner.
+Initially, we had to manually carry out each step in Metashape to create the 3D model, which was tedious and time-consuming.
 
-To simplify our work even further, we created this project. It is tailored to our current scanner workflow.
+To improve our productivity, we developed some [Metashape scripts](https://github.com/kizvki/Insect-Scanner/tree/main/Metashape/Script/Version%201.8) that automate many of the repetitive tasks. These scripts were already very useful and expedited the entire process. However, they had to be executed manually within the Metashape software, and the settings had to be adjusted every time we recalibrated the scanner.
+
+To simplify our work even further, we created this project. It is tailored to our new scanning workflow.
 
 
-## Dataset
+## Dataset structure
 
 The datasets we get from the 3D-Scanners have the following structure:
 
 ```
 ETHZ-ENT0574269                     --> Dataset folder with unique number
-├── edof                            --> Image folder
-│ ├── image_0001_-70_0.png          --> Image
-│ ├── image_0002_-70_29.2.png       --> Image
-│ ├── image_0003_-70_58.4           --> Image
-│ └── ...                           --> 393 more images
+├── edof                            --> Image folder (extended depth of focus)
+│ ├── image_0001_-70_0.png          --> Edof image
+│ ├── image_0002_-70_29.2.png       --> Edof image
+│ ├── image_0003_-70_58.4           --> Edof image
+│ └── ...                           --> 393 more edof images
 ├── scanInformation.pdf             --> File with scan parameters
 └── camPos.txt                      --> File with camera positions
 ```
 
-
 ## Folder Workflow
-We created four folders that we use to indicate the dataset's state. Every dataset will pass through each folder.
+We use four folders to indicate the dataset's state. Every dataset will pass through each folder.
 
 ```
 1_SCANNED      --> Here are all uncalculated datasets (directly from scanner) stored.
 2_CALCULATED   --> Here are all calculated datasets (calculated with the calculation helper) stored.
 3_UNPINNED     --> Here are all unpinned datasets (pin manually removed from insect) stored.
-4_EXPORTED     --> Here are all exported datasets (exported with export helper) stored.
+4_EXPORTED     --> Here are all exported datasets (exported with the export helper) stored.
 ```
 
-![Folder Workflow](Folders.png)
+![Folder Workflow](https://github.com/ETHEntColl/Metashape_Helper/blob/main/docs/folders.png)
 
 *Our current workflow*
 
@@ -44,11 +45,13 @@ We created four folders that we use to indicate the dataset's state. Every datas
 
 To install the project, follow these steps:
 
-1. Clone the repository with `git clone [repository-url]`. If you are in the ETH network you need to set the proxy first: `git config --global http.proxy http://proxy.ethz.ch:3128`
+1. Clone the repository with `git clone [repository-url]`.<br /> 
+⚠️ ETH network needs proxy `git config http.proxy http://proxy.ethz.ch:3128`.
+
 2. Download the needed Metashape python module [here](https://www.agisoft.com/downloads/installer/).
 3. Install the downloaded module file with `pip install [whl-filename]`.
 4. Ensure that you activate your metashape license on your system.
-5. Adjust the settings in the `src/settings/settings.py` file.
+5. Adjust the settings in the `src/settings/settings.py` file (most important settings are the folders).
 
 ```
 settings = {
