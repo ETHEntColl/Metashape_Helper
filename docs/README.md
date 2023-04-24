@@ -2,7 +2,7 @@
 # Metashape Helper
 
 ## Introduction
-We are in the process of digitalizing our insect types in the [Entomological Collection](https://usys.ethz.ch/en/research/collections/entomological-collection.html) at ETH with a 3d-scanner from [Small World Vision](https://small-world-vision.de/en/). Our goal is to have a 3d-model (calculated with Metashape) of all our most valuable insects and later make them available for the public using a 3d-viewer.
+We are in the process of digitalizing our insect types in the [Entomological Collection](https://usys.ethz.ch/en/research/collections/entomological-collection.html) at ETH with a 3d-scanner from [Small World Vision](https://small-world-vision.de/en/). Our goal is to have a 3d-model (calculated with Metashape) of all our most valuable insects and make them available for the public using a 3d-viewer.
 
 Initially, we had to manually carry out each step in Metashape to create the 3D model, which was tedious and time-consuming.
 
