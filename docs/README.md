@@ -10,6 +10,13 @@ To improve our productivity, we developed some [Metashape scripts](https://githu
 
 To simplify our work even further, we created this project. It is tailored to our new scanning workflow.
 
+## Features
+
+- Calculate and export dataset models with only one click
+- Adjust settings only once
+- Automatically retrieve the parameters needed from the datasets (f number, camPos, image size, num images)
+- Show a progress overview
+- Log files for calculation and export
 
 ## Dataset structure
 
