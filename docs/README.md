@@ -106,12 +106,12 @@ If there has been an error you can check out the log file.
 ## How it works
 
 ### Basic process
-1. The settings from the settings.py are validated (`settings_validator.py`)
-2. The window of is created (`helper_window.py` & `tkinter_helper.py`)
-3. A new thread is created for the calculation/export (`calculate.py/export.py`)
-2. The datasets are retrieved from the calculation/export input folder (by `dataset_helper.py`)
+1. The settings are validated (`settings.py` & `settings_validator.py`)
+2. The window is created (`helper_window.py` & `tkinter_helper.py`)
+3. A new thread is created for the calculation/export (`calculate.py` & `export.py`)
+2. The datasets are retrieved from the calculation/export input folder (`dataset_helper.py`)
 3. All datasets are calculated/exported (by `metashape_helper.py`)
-4. The calculated/exported detasets are moved to the calculation/export output folder (by `dataset_helper.py`)
+4. The calculated/exported detasets are moved to the calculation/export output folder (`dataset_helper.py`)
 
 ## Contributing
 
