@@ -1,4 +1,5 @@
 import os
+import re
 from typing import List
 import Metashape
 
@@ -24,6 +25,10 @@ class SettingsValidator:
             'cam_pos_file_path': str,
             'scan_info_file_path': str,
 
+            # Scan info pdf regex
+            "f_number_regex": str,
+            "num_images_regex": str,
+
             # Helper input & output folders
             'calculation_input_folder_path': str,
             'calculation_output_folder_path': str,
@@ -34,6 +39,7 @@ class SettingsValidator:
             'use_tweaks': bool,
             'tweaks': List,
             'depthmap_downscale': int,
+            'use_smooth': bool,
 
             # Export settings
             'image_texture_size': int,
@@ -62,6 +68,7 @@ class SettingsValidator:
         self.validate_image_extensions()
         self.validate_use_tweaks()
         self.validate_folders()
+        self.validate_regexes()
 
     def validate_script_api_version(self):
         script_api_version = settings.get('script_api_version')
@@ -99,3 +106,12 @@ class SettingsValidator:
             folder_path = settings.get(folder_name)
             if not os.path.exists(folder_path):
                 raise FileNotFoundError(f"The {folder_name} : '{folder_path}' does not exist!")
+            
+    def validate_regexes(self):
+        regexes = ['f_number_regex', 'num_images_regex']
+        for regex in regexes:
+            regex_pattern = settings.get(regex)
+            try:
+                re.compile(regex_pattern)
+            except:
+                raise SettingValueError(f"{regex} is not valid regular expression!")

@@ -1,8 +1,13 @@
+from enum import Enum
 import sys, os
 from typing import List, Tuple
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from settings.settings import settings
+
+class HelperMode(Enum):
+    CALCULATION = 1
+    EXPORT = 2
 
 class Dataset:
     def __init__(
@@ -45,42 +50,37 @@ class Dataset:
         return has_valid_name
 
 
-    def is_complete_for_calculation(self) -> bool:
+    def is_complete(self, mode: HelperMode) -> bool:
         has_valid_name        = self.has_valid_name()
         cam_pos_file_exists   = os.path.isfile(self.cam_pos_file_path)
         scan_info_file_exists = os.path.isfile(self.scan_info_file_path)
+        has_f_number          = self.f_number is not None
+        has_images            = len(self.images) > 0
+        has_image_size        = self.image_size is not None
+        has_needed_images     = len(self.images) == self.needed_image_count
         psx_file_exists       = os.path.isfile(self.psx_file_path)
         in_use                = self.in_use()
 
-        has_f_number      = self.f_number is not None
-        has_images        = self.images is not None and len(self.images) > 0
-        has_image_size    = self.image_size is not None
-        has_needed_images = self.images is not None and len(self.images) == self.needed_image_count
-
         # Check if the dataset has the needed things to be calculated
-        is_complete =  all([
-            has_valid_name,
-            cam_pos_file_exists,
-            scan_info_file_exists,
-            has_f_number,
-            has_images, 
-            has_image_size,
-            has_needed_images,
-            not psx_file_exists or psx_file_exists and not in_use
-        ])
-        return is_complete
-
-    def is_complete_for_export(self) -> bool:
-        has_valid_name  = self.has_valid_name()
-        psx_file_exists = os.path.isfile(self.psx_file_path)
-        in_use          = self.in_use()
-
+        if mode == HelperMode.CALCULATION:
+            is_complete =  all([
+                has_valid_name,
+                cam_pos_file_exists,
+                scan_info_file_exists,
+                has_f_number,
+                has_images, 
+                has_image_size,
+                has_needed_images,
+                not psx_file_exists or psx_file_exists and not in_use
+            ])
         # Check if the dataset has the needed things to be exported
-        is_complete =  all([
-            has_valid_name,
-            psx_file_exists,
-            not in_use,
-        ])
+        if mode == HelperMode.EXPORT:
+            is_complete =  all([
+                has_valid_name,
+                psx_file_exists,
+                not in_use,
+            ])
+       
         return is_complete
     
     def in_use(self)-> bool:

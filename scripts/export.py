@@ -7,6 +7,7 @@ from tkinter import messagebox
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 from data.dataset_helper import DatasetHelper
+from data.dataset import HelperMode
 from gui.helper_window import HelperWindow
 from settings.settings import settings
 from settings.settings_validator import SettingsValidator
@@ -19,7 +20,7 @@ def export():
 
     try:
         # Get the available datasets
-        available_datasets = dataset_helper.get_export_datasets()
+        available_datasets = dataset_helper.get_available_datasets()
 
         # Raise an exception if there are no available datasets
         if len(available_datasets) == 0:
@@ -158,7 +159,7 @@ if __name__ == '__main__':
         # Create the dataset helper with the export input and output folders
         export_input_folder_path  = settings.get('export_input_folder_path')
         export_output_folder_path = settings.get('export_output_folder_path')
-        dataset_helper = DatasetHelper(logger, export_input_folder_path, export_output_folder_path)
+        dataset_helper = DatasetHelper(logger, export_input_folder_path, export_output_folder_path, HelperMode.EXPORT)
 
         # Create the gui of the helper and add what
         window = HelperWindow("Export helper")

@@ -1,4 +1,5 @@
 import os
+import time
 import tkinter as tk    
 
 from .tkinter_helper import TkinterHelper
@@ -40,6 +41,9 @@ class HelperWindow():
         self.current_dataset_task_progressbar              = self.tkinter_helper.create_progressbar(self.current_dataset_progress_label_frame, 2, 1, False)
         self.current_dataset_task_dynamic_label            = self.tkinter_helper.create_label(self.current_dataset_progress_label_frame, 2, 2, "0 %", False, False)
 
+        # Progressbar last update
+        self.last_updated = time.monotonic()
+
     def update_datasets_done(self, step: float, processed_datasets: int, available_datasets: int):
         # Update the datasets done
         self.datasets_done_progressbar['value'] += step
@@ -50,6 +54,20 @@ class HelperWindow():
         self.current_dataset_task_name_dynamic_label.configure(text=task_name)
         self.current_dataset_task_number_dynamic_label.configure(text=f"{current_task} of {task_amount}")
 
+    def throttle(func):
+        """
+        A decorator that throttles a function to run at most once per second.
+        """
+        last_called = 0
+        def throttled(*args, **kwargs):
+            nonlocal last_called
+            elapsed = time.time() - last_called
+            if elapsed > 1:
+                last_called = time.time()
+                return func(*args, **kwargs)
+        return throttled
+
+    @throttle
     def update_current_dataset_task_progress(self, value: float):
         # Update the current task progressbar and percentage
         self.current_dataset_task_progressbar['value'] = value
@@ -61,10 +79,12 @@ class HelperWindow():
         self.current_dataset_task_progressbar['value'] = 0
         percentage = self.current_dataset_task_progressbar['value']
         self.current_dataset_task_dynamic_label.configure(text=f"{int(percentage)} %")
+    
 
     def open(self):
         # Open the window
         self.master.mainloop()
+
 
     def close(self):
         # Close the window

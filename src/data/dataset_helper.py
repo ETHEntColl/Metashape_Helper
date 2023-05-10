@@ -1,88 +1,88 @@
+from enum import Enum
 import sys, os
 import re
 import shutil
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 from PIL import Image
 from PyPDF2 import PdfReader
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from settings.settings import settings
-from data.dataset import Dataset
+from data.dataset import Dataset, HelperMode
 from logger import Logger
 
-
 class DatasetHelper():
-    def __init__(self, logger: Logger, input_folder: str, output_folder: str) -> None:
+    def __init__(
+        self, 
+        logger: Logger,
+        input_folder: str,
+        output_folder: str,
+        helper_mode: HelperMode
+    ) -> None:
         self.logger        = logger
         self.input_folder  = input_folder
         self.output_folder = output_folder
+        self.helper_mode   = helper_mode
 
-    # Function used to get all available datasets (objects)
-    def get_calculation_datasets(self) -> List[Dataset]:
+
+    def get_available_datasets(self) -> List[Dataset]:
+        """
+        Retrieves all available datasets in the input folder and returns them as a list of Dataset objects.
+        A dataset is considered available if it is a directory and its completeness meets the requirements of
+        the provided HelperMode. If a dataset is not complete, it will be skipped.
+        """
         self.logger.log(f"Retrieving available datasets...")
-        dataset_objects = []
-        # Go through all elements in the input folder
+
+        # Create empty list for the available datasets
+        available_dataset_objects = []
+
+        # Loop through everything in the input folder (files/folders)
         for dataset_name in os.listdir(self.input_folder):
-            use_folder_prefix = settings.get('use_folder_prefix')
-            folder_prefixes   = settings.get('folder_prefixes')
-            if not use_folder_prefix or (folder_prefixes and any(dataset_name.startswith(prefix) for prefix in folder_prefixes)):
-                dataset_path = os.path.join(self.input_folder, dataset_name)
-                # Check if the path is a directory
-                if os.path.isdir(dataset_path):
-                    # create an object
-                    dataset = self.create_dataset_object(dataset_name, dataset_path)
-                    # Check if the dataset object is complete (has all needed parameters for the calculation)
-                    if dataset.is_complete_for_calculation():
-                        self.logger.log(f"  {dataset_name} is complete")
-                        # Add the dataset to the dataset object list
-                        dataset_objects.append(dataset)
-                    else:
-                        self.logger.log(f"  {dataset_name} is incomplete")
-        self.logger.log(f"Total available datasets: {len(dataset_objects)}")
-        return dataset_objects
+            # Create the full path of the dataset
+            dataset_path = os.path.join(self.input_folder, dataset_name)
+
+            # Check if the created path is a directory
+            if os.path.isdir(dataset_path):
+                # Create a dataset object
+                dataset = self.create_dataset_object(dataset_path)
+
+                # Check if the dataset object is complete for the respective mode
+                dataset_is_complete = dataset.is_complete(self.helper_mode)
+                if dataset_is_complete:
+                    self.logger.log(f"  {dataset_name} is complete")
+                    # Append the complete dataset to the list
+                    available_dataset_objects.append(dataset)
+                else:
+                    self.logger.log(f"  {dataset_name} is incomplete")
+
+        self.logger.log(f"Total available datasets: {len(available_dataset_objects)}")
+        return available_dataset_objects
+
     
-    # Function used to get all available datasets (objects)
-    def get_export_datasets(self) -> List[Dataset]:
-        self.logger.log(f"Retrieving available datasets...")
-        dataset_objects = []
-        for dataset_name in os.listdir(self.input_folder):
-            use_folder_prefix = settings.get('use_folder_prefix')
-            folder_prefixes   = settings.get('folder_prefixes')
-            if not use_folder_prefix or (folder_prefixes and any(dataset_name.startswith(prefix) for prefix in folder_prefixes)):
-                dataset_path = os.path.join(self.input_folder, dataset_name)
-                # Check if the path is a directory
-                if os.path.isdir(dataset_path):
-                    # create an object
-                    dataset = self.create_dataset_object(dataset_name, dataset_path)
-                    # Check if the dataset object is complete (has all needed parameters for the export)
-                    if dataset.is_complete_for_export():
-                        self.logger.log(f"  {dataset_name} is complete")
-                        # Add the dataset to the dataset object list
-                        dataset_objects.append(dataset)
-                    else:
-                        self.logger.log(f"  {dataset_name} is incomplete")
-        self.logger.log(f"Total available datasets: {len(dataset_objects)}")
-        return dataset_objects
-
-
-    def create_dataset_object(self, dataset_name: str, dataset_path: str) -> Dataset:
-        # Get all the needed dataset attributes
-        basepath            = dataset_path
-        image_folder_path   = os.path.join(basepath, settings['image_folder_path'])
-        model_folder_path   = os.path.join(basepath, settings['model_folder_path'])
-        cam_pos_file_path   = os.path.join(basepath, settings['cam_pos_file_path'])
-        scan_info_file_path = os.path.join(basepath, settings['scan_info_file_path'])
+    def create_dataset_object(self, dataset_path: str) -> Dataset:
+        """
+        This method creates a new Dataset object from the given dataset_path. No checks are made to ensure the dataset 
+        exists. To determine whether the dataset is complete and can be used for calculation or export, use the methods 
+        dataset.is_complete_for_calculation() and dataset.is_complete_for_export(), respectively.
+        """
+        # Get all the needed dataset attributes 
+        dataset_name        = os.path.basename(dataset_path)
+        image_folder_path   = os.path.join(dataset_path, settings['image_folder_path'])
+        model_folder_path   = os.path.join(dataset_path, settings['model_folder_path'])
+        cam_pos_file_path   = os.path.join(dataset_path, settings['cam_pos_file_path'])
+        scan_info_file_path = os.path.join(dataset_path, settings['scan_info_file_path'])
         psx_file_path       = os.path.join(model_folder_path, f"{dataset_name}.psx")
         obj_file_path       = os.path.join(model_folder_path, f"{dataset_name}.obj")
         f_number            = self.get_f_number(scan_info_file_path)
         image_paths         = self.get_image_paths(image_folder_path)
+        image_size          = self.get_first_image_size(image_paths)
         needed_image_count  = self.get_needed_image_count(scan_info_file_path)
-        image_size          = self.get_image_size(image_paths)
+        
 
         # Create dataset object with the attributes
         dataset = Dataset(
             dataset_name,
-            basepath,
+            dataset_path,
             image_folder_path,
             model_folder_path,
             cam_pos_file_path,
@@ -96,72 +96,93 @@ class DatasetHelper():
         )
         return dataset
     
-    # Function used to get all available datasets (objects)
-    def get_image_paths(self, image_folder_path: str) -> Union[List[str], None]:
+
+    def get_image_paths(self, image_folder_path: str) -> List[str]:
+        """
+        This method returns a list of all image paths in a specified folder.
+        """
         image_paths = []
-        
         # Add the images to the image paths list
         if os.path.exists(image_folder_path):
-            for image in os.scandir(image_folder_path):
-                if image.is_file() and image.name.lower().endswith(tuple(settings['image_extensions'])):
-                    image_paths.append(os.path.join(image_folder_path, image.name))
-
-        # Return None if there are no images
-        image_paths = None if len(image_paths) == 0 else image_paths
+            for entry in os.scandir(image_folder_path):
+                if entry.is_file() and entry.name.lower().endswith(tuple(settings['image_extensions'])):
+                    image_paths.append(entry.path)
+        # Return the image list
         return image_paths
 
-    # Function to get the f number from the pdf file
-    def get_f_number(self, scan_info_file_path) -> Union[float, None]:
-        f_number = None
+
+    def get_needed_image_count(self, scan_info_file_path: str) -> Optional[int]:
+        """
+        This method is used to extract the needed image count from the scan information pdf. 
+        If the num images could not be extracted or it is 0 it returns None.
+        """
         try:
-            # Try to open the ScanInformation.pdf file and extract the f number
             with open(scan_info_file_path, "rb") as pdf_file:
                 pdf_reader = PdfReader(pdf_file)
-                if len(pdf_reader.pages) == 0:
-                    raise ValueError("ScanInformation.pdf is empty")
                 pdf_text = pdf_reader.pages[0].extract_text()
-                match = re.search(r"([0-9.]{8})", pdf_text)
-                f_number = float(match.group(1))
+            cleaned_pdf_text = self.clean_pdf_text(pdf_text)
+            match = re.search(settings.get('num_images_regex'), cleaned_pdf_text)
+            if match:
+                num_images = int(match.group(1))
+                if num_images > 0:
+                    return num_images
         except:
             pass
-        # Return None or the f_number
-        return f_number
+        return None
     
-    # Function to get the image size from the first image
-    def get_image_size(self, image_path: str) -> Union[Tuple[int, int], None]:
-        image_size = None
+
+    def get_first_image_size(self, image_paths: List[str]) -> Optional[Tuple[int, int]]:
+        """
+        This method is used to retrieve the size of the first image.
+        If the image size cannot be accessed or is not a tuple of two integers, it returns None.
+        """
         try:
             # Open the first image and get the image size (width, height)
-            with Image.open(image_path[0]) as first_image:
-                image_size = first_image.size
+            with Image.open(image_paths[0]) as image:
+                width, height = image.size
+                if isinstance(width, int) and isinstance(height, int):
+                    return width, height
         except:
             pass
-        # Return None if the the imagesize is not a tuple of two ints or the image size tuple
-        image_size = None if not isinstance(image_size, tuple) or len(image_size) != 2 or not all(isinstance(x, int) for x in image_size) else image_size
-        return image_size
+        return None
 
 
-    def get_needed_image_count(self, scan_info_file_path: str) -> Union[int, None]:
-        num_images = None
+    def get_f_number(self, scan_info_file_path) -> Optional[float]:
+        """
+        This method is used extract the f number from the scan information file 
+        """
         try:
-            # Try to open the ScanInformation.pdf file and extract the needed image count
             with open(scan_info_file_path, "rb") as pdf_file:
                 pdf_reader = PdfReader(pdf_file)
-                if len(pdf_reader.pages) == 0:
-                    raise ValueError("ScanInformation.pdf is empty")
                 pdf_text = pdf_reader.pages[0].extract_text()
-
-            match = re.search(r"Num Images: \n([0-9]*)", pdf_text)
-            num_images = int(match.group(1))
-        except:
+            cleaned_pdf_text = self.clean_pdf_text(pdf_text)
+            match = re.search(settings.get('f_number_regex'), cleaned_pdf_text)
+            if match:
+                return float(match.group(1))
+        except Exception as e:
             pass
-        # Return None if there are 
-        num_images = None if num_images == 0 else num_images
-        return num_images
+        return None
     
+    
+    def clean_pdf_text(self, pdf_text: str) -> str:
+        """
+        This method is used to remove \n (newline) and unnecessary spaces from pdf text.
+        """
+        # replace all \n with a space
+        cleaned_pdf_text = re.sub('\n', ' ', pdf_text)
+        # replace all multiple spaces with one space
+        cleaned_pdf_text = re.sub(' +', ' ', cleaned_pdf_text)
 
-    # Function used to move processed datasets into the output folders
+        # replace all spaces after colon
+        cleaned_pdf_text = re.sub(r":\s+", ":", cleaned_pdf_text)
+
+        return cleaned_pdf_text
+
+
     def move_dataset(self, dataset: Dataset) -> None:
+        """
+        This method is used to move processed datasets into the output folder
+        """
         # Check if the dataset path is a directory
         if not os.path.isdir(dataset.basepath):
             raise ValueError("The dataset path does not exist or is not a directory")

@@ -57,8 +57,9 @@ To install the project, follow these steps:
 
 2. Download the needed Metashape python module [here](https://www.agisoft.com/downloads/installer/).
 3. Install the downloaded module file with `pip install [whl-filename]`.
-4. Ensure that you activate your metashape license on your system.
-5. Adjust the settings in the `src/settings/settings.py` file (most important settings are the folders).
+4. Install PyPdf2 (3.0.1) and Pillow(9.5.0) with `pip install PyPDF2` and `pip install Pillow`
+5. Ensure that you activate your metashape license on your system.
+6. Adjust the settings in the `src/settings/settings.py` file (most important settings are the folders).
 
 ```
 settings = {
@@ -77,6 +78,10 @@ settings = {
     "cam_pos_file_path": "CamPos.txt",
     "scan_info_file_path": "ScanInformation.pdf",
     
+    # Scan info pdf regex
+    "f_number_regex": r"([0-9.]{8})",
+    "num_images_regex": r"Num Images: \n([0-9]*)",
+
     # Helper input & output folders
     "calculation_input_folder_path":  "C:\\InsectScanner\\Data\\DataCurrent\\1_SCANNED",
     "calculation_output_folder_path": "C:\\InsectScanner\\Data\\DataCurrent\\2_CALCULATED",
@@ -87,6 +92,7 @@ settings = {
     "use_tweaks": True,
     "tweaks": [("ooc_surface_blow_up",  "0.95"), ("ooc_surface_blow_off", "0.95")],
     "depthmap_downscale": 0,
+    "use_smooth": True,
 
     # Export settings
     "image_texture_size": 4096

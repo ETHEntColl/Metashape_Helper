@@ -15,9 +15,13 @@ class MetashapeHelper():
 
         # Create a metashape document
         self.document  = Metashape.Document()
+
+        # Task amounts that need to be done
+        self.task_amount = 0
         
         # Create the coordinate system
         self.coordinate_system = Metashape.CoordinateSystem('LOCAL_CS["Local Coordinates (mm)",LOCAL_DATUM["Local Datum",0],UNIT["millimetre",0.001,AUTHORITY["EPSG","1025"]]]')
+
 
     def calculate(self):
         # Delete old file
@@ -30,6 +34,9 @@ class MetashapeHelper():
         self.document.addChunk()
         self.document.chunk.crs = self.coordinate_system
 
+        # Set the task amount
+        self.task_amount = (1 if settings.get('use_smooth') else 0) + 5
+
         # Add the photos, the cam poses, the f number and image size
         self.addPhotos()
         self.importCameraReferences()
@@ -41,7 +48,10 @@ class MetashapeHelper():
         self.optimizeCameras()
         self.buildDepthMaps()
         self.buildModel()
-        self.smoothModel()
+        
+        # Smooth model only if the use_smooth settings is True
+        if settings.get('use_smooth'):
+            self.smoothModel()
 
         # Close the document -> Remove lock file manually (metashape does not have a good option for this)
         self.close_document()
@@ -51,6 +61,9 @@ class MetashapeHelper():
         if os.path.isfile(self.dataset.psx_file_path):
             # Load the existing .psx file
             self.document.open(self.dataset.psx_file_path, read_only=False, ignore_lock=False) 
+
+        # Set the task amount
+        self.task_amount = 3
 
         # Go through all export tasks
         self.buildUV()
@@ -116,13 +129,14 @@ class MetashapeHelper():
 
         # Log task end
         self.logger.log("      Finished!")
-        
+
+
     def matchPhotos(self):
         # Clear current task progressbar
         self.window.reset_current_dataset_task_progressbar()
 
         # Update current task name and number labels in window
-        self.window.update_task_info("Match Photos", 1, 6)
+        self.window.update_task_info("Match Photos", 1, self.task_amount)
 
         # Save the start time of the task
         start_time = time.time()
@@ -149,12 +163,13 @@ class MetashapeHelper():
         # Log task end
         self.logger.log_task_finish(start_time)
 
+
     def alignCameras(self):
         # Clear current task progressbar
         self.window.reset_current_dataset_task_progressbar()
 
         # Update current task name and number labels in window
-        self.window.update_task_info("Align Cameras", 2, 6)
+        self.window.update_task_info("Align Cameras", 2, self.task_amount)
 
         # Save the start time of the task 
         start_time = time.time()
@@ -163,7 +178,9 @@ class MetashapeHelper():
         self.logger.log_task_start("Align Cameras")
 
         # Execute task
-        self.document.chunk.alignCameras(progress=self.window.update_current_dataset_task_progress)
+        self.document.chunk.alignCameras(
+            progress=self.window.update_current_dataset_task_progress
+        )
         
         # Save the document
         self.document.save()
@@ -176,7 +193,7 @@ class MetashapeHelper():
         # Clear current task progressbar
         self.window.reset_current_dataset_task_progressbar()
         # Update current task name and number labels in window
-        self.window.update_task_info("Optimize Cameras", 3, 6)
+        self.window.update_task_info("Optimize Cameras", 3, self.task_amount)
 
         # Save the start time of the task
         start_time = time.time()
@@ -214,7 +231,7 @@ class MetashapeHelper():
         # Clear current task progressbar
         self.window.reset_current_dataset_task_progressbar()
         # Update current task name and number labels in window
-        self.window.update_task_info("Build Depthmaps", 4, 6)
+        self.window.update_task_info("Build Depthmaps", 4, self.task_amount)
 
         # Save the start time of the task
         start_time = time.time()
@@ -235,12 +252,13 @@ class MetashapeHelper():
         # Log task end
         self.logger.log_task_finish(start_time)
 
+
     def buildModel(self):
         # Clear current task progressbar
         self.window.reset_current_dataset_task_progressbar()
 
         # Update current task name and number labels in window
-        self.window.update_task_info("Build Model", 5, 6)
+        self.window.update_task_info("Build Model", 5, self.task_amount)
 
         # Save the start time of the task
         start_time = time.time()
@@ -280,7 +298,7 @@ class MetashapeHelper():
         self.window.reset_current_dataset_task_progressbar()
 
         # Update current task name and number labels in window
-        self.window.update_task_info("Smooth Model", 6, 6) 
+        self.window.update_task_info("Smooth Model", 6, self.task_amount) 
 
         # Save the start time of the task
         start_time = time.time()
@@ -290,7 +308,7 @@ class MetashapeHelper():
 
         # Execute task
         self.document.chunk.smoothModel(
-            strength       = 2,
+            strength       = 1,
             fix_borders    = False,
             preserve_edges = False,
             progress=self.window.update_current_dataset_task_progress
@@ -302,12 +320,13 @@ class MetashapeHelper():
         # Log task end
         self.logger.log_task_finish(start_time)
 
+
     def buildUV(self):
         # Clear current task progressbar
         self.window.reset_current_dataset_task_progressbar()
 
         # Update current task name and number labels in window
-        self.window.update_task_info('Build UV', 1, 3)
+        self.window.update_task_info('Build UV', 1, self.task_amount)
 
         # Save the start time of the task
         start_time = time.time()
@@ -315,11 +334,14 @@ class MetashapeHelper():
         # Log the task start
         self.logger.log_task_start("Build UV")
 
+        # Store the image_texture size
+        image_texture_size = settings.get('image_texture_size')
+
         # Execute task
         self.document.chunk.buildUV(
             mapping_mode = Metashape.GenericMapping,
             page_count   = 1,
-            texture_size = settings.get('image_texture_size'),
+            texture_size = image_texture_size,
             progress=self.window.update_current_dataset_task_progress
         )
 
@@ -329,12 +351,13 @@ class MetashapeHelper():
         # Log task end
         self.logger.log_task_finish(start_time)
 
+
     def buildTexture(self):
         # Clear current task progressbar
         self.window.reset_current_dataset_task_progressbar()
 
         # Update current task name and number labels in window
-        self.window.update_task_info('Build Texture', 2, 3)
+        self.window.update_task_info('Build Texture', 2, self.task_amount)
 
         # Save the start time of the task
         start_time = time.time()
@@ -355,12 +378,13 @@ class MetashapeHelper():
         # Log task end
         self.logger.log_task_finish(start_time)
 
+
     def exportModel(self):
         # Clear current task progressbar
         self.window.reset_current_dataset_task_progressbar()
 
         # Update current task name and number labels in window
-        self.window.update_task_info('Export Model', 3, 3)
+        self.window.update_task_info('Export Model', 3, self.task_amount)
 
         # Save the start time of the task
         start_time = time.time()
@@ -370,19 +394,19 @@ class MetashapeHelper():
 
         # Execute task
         self.document.chunk.exportModel(
-            path=self.dataset.obj_file_path,
-            binary=True,
-            precision=6,
-            texture_format = Metashape.ImageFormatPNG,
-            save_texture=True,
-            save_uv=True,
-            save_normals=True,
-            save_colors=True,
-            save_alpha=True,
-            colors_rgb_8bit=True,
-            format=Metashape.ModelFormatOBJ,
-            crs = self.coordinate_system,
-            progress=self.window.update_current_dataset_task_progress
+            path            = self.dataset.obj_file_path,
+            binary          = True,
+            precision       = 6,
+            texture_format  = Metashape.ImageFormatPNG,
+            save_texture    = True,
+            save_uv         = True,
+            save_normals    = True,
+            save_colors     = True,
+            save_alpha      = True,
+            colors_rgb_8bit = True,
+            format          = Metashape.ModelFormatOBJ,
+            crs             = self.coordinate_system,
+            progress        = self.window.update_current_dataset_task_progress
         )
 
         # Save the document
@@ -390,6 +414,7 @@ class MetashapeHelper():
 
         # Log task end
         self.logger.log_task_finish(start_time)
+
 
     def close_document(self):
         # Close delete the document
