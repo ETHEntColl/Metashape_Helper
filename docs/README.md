@@ -57,9 +57,10 @@ To install the project, follow these steps:
 
 2. Download the needed Metashape python module [here](https://www.agisoft.com/downloads/installer/).
 3. Install the downloaded module file with `pip install [whl-filename]`.
-4. Install PyPdf2 (3.0.1) and Pillow(9.5.0) with `pip install PyPDF2` and `pip install Pillow`
+4. Install PyPdf2 (3.0.1) and Pillow (9.5.0) with `pip install PyPDF2` and `pip install Pillow`
 5. Ensure that you activate your metashape license on your system.
 6. Adjust the settings in the `src/settings/settings.py` file (most important settings are the folders).
+   ⚠️ If the paths do not exist the helper will instantly close!
 
 ```
 settings = {
@@ -67,7 +68,7 @@ settings = {
     "script_api_version": "2.0",
 
     # Log settings
-    "log_output_folder_path": "C:\\InsectScanner\\Data\\Helper\\Logs",
+    "log_output_folder_path": "C:\\InsectScanner\\Logs",
 
     # Dataset structure settings
     "use_folder_prefix": True, 
@@ -77,16 +78,16 @@ settings = {
     "image_extensions": [".png", ".jpg", ".jpeg", ".tif", ".tiff"],
     "cam_pos_file_path": "CamPos.txt",
     "scan_info_file_path": "ScanInformation.pdf",
-    
-    # Scan info pdf regex
-    "f_number_regex": r"([0-9.]{8})",
-    "num_images_regex": r"Num Images: \n([0-9]*)",
 
+    # Scan info pdf regex: may need changes -> see dataset_helper.py clean_pdf_text method
+    "f_number_regex":   r"Camera Constant\/f \[px\]:([0-9]*.[0-9]*)",
+    "num_images_regex": r"Num Images:([0-9]*)",
+    
     # Helper input & output folders
-    "calculation_input_folder_path":  "C:\\InsectScanner\\Data\\DataCurrent\\1_SCANNED",
-    "calculation_output_folder_path": "C:\\InsectScanner\\Data\\DataCurrent\\2_CALCULATED",
-    "export_input_folder_path":       "C:\\InsectScanner\\Data\\DataCurrent\\3_UNPINNED",
-    "export_output_folder_path":      "C:\\InsectScanner\\Data\\DataCurrent\\4_EXPORTED",
+    "calculation_input_folder_path":  "C:\\InsectScanner\\Data\\SCANNED",
+    "calculation_output_folder_path": "C:\\InsectScanner\\Data\\CALCULATED",
+    "export_input_folder_path":       "C:\\InsectScanner\\Data\\UNPINNED",
+    "export_output_folder_path":      "C:\\InsectScanner\\Data\\EXPORTED",
 
     # Calculation settings
     "use_tweaks": True,
