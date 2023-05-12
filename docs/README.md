@@ -58,6 +58,7 @@ To install the project, follow these steps:
 2. Download the needed Metashape python module [here](https://www.agisoft.com/downloads/installer/).
 3. Install the downloaded module file with `pip install [whl-filename]`.
 4. Install PyPdf2 (3.0.1) and Pillow (9.5.0) with `pip install PyPDF2` and `pip install Pillow`
+   ⚠️ ETH network needs proxy ``pip install --proxy http://proxy.ethz.ch:3128 [package-name]`.
 5. Ensure that you activate your metashape license on your system.
 6. Adjust the settings in the `src/settings/settings.py` file (most important settings are the folders).
    ⚠️ If the paths do not exist the helper will instantly close!
