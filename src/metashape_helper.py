@@ -267,7 +267,7 @@ class MetashapeHelper():
         self.logger.log_task_start("Build Model")
 
         # If there are tweaks calculate the model with tweaks
-        if(len(settings.get('tweaks')) > 0):
+        if settings.get('use_tweaks') and (len(settings.get('tweaks')) > 0):
             task = Metashape.Tasks.BuildModel()
             for tweak in settings.get('tweaks'):
                 task[tweak[0]] = tweak[1]
